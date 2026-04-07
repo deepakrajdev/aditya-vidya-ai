@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: vidya-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database (optional, for production)
+  postgres:
+    image: postgres:16-alpine
+    container_name: vidya-postgres
+    environment:
+      POSTGRES_USER: vidya
+      POSTGRES_PASSWORD: vidya_secure_password_123
+      POSTGRES_DB: vidya_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vidya"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vidya-backend
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: gpt-oss:120b-cloud
+      DATABASE_URL: postgresql://vidya:vidya_secure_password_123@postgres:5432/vidya_ai
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-admin-secret}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - chroma_data:/app/chroma_db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vidya-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  ollama_data:
+  postgres_data:
+  chroma_data:
+
+networks:
+  default:
+    name: vidya-network

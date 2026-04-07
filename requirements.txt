@@ -1,0 +1,14 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+httpx==0.27.0
+chromadb==0.5.3
+PyPDF2==3.0.1
+pydantic==2.7.4
+pydantic[email]==2.7.4
+python-multipart==0.0.9
+sqlmodel==0.0.14
+sqlalchemy==2.0.23
+passlib==1.7.4
+python-jose[cryptography]==3.3.0
+python-dotenv==1.0.0
+ollama==0.4.7
