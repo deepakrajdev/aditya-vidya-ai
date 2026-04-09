@@ -1,225 +1,241 @@
-# VidyaAI - Smart NCERT AI Tutor Platform
+# VidyaAI
 
-A production-ready AI tutoring application for Indian students (Classes 10-12) built with **FastAPI + Ollama + ChromaDB + React**.
+VidyaAI is a FastAPI + React tutoring app for chapter-based study, quiz practice, and AI-assisted explanations over NCERT-style content.
 
-## 🎯 Features
+## What is in this repo
 
-✅ **Smart AI Tutoring**
-- Interactive chat with GPT-OSS 120B model
-- Concept explanations with Indian examples
-- Essay generation for any topic
-- Quiz generation with automated grading
+- `backend/` - FastAPI API, auth, tutor endpoints, quiz tracking, PDF ingestion
+- `frontend/` - Vite + React + TypeScript student UI
+- `chroma_db/` - local Chroma persistence
+- `data/` - local content/data assets
+- `run_backend.ps1` - starts the backend on port `8000`
+- `run_frontend.ps1` - starts the frontend on port `3000`
+- `start_vidya_ai.ps1` - opens backend and frontend together
 
-✅ **User Management**
-- Email/password registration & login
-- JWT-based authentication
-- User access logs & quiz history
+## Stack
 
-✅ **Content Organization**
-- NCERT books organized by class, subject, chapter
-- RAG-powered retrieval for accurate answers
-- Support for Class 10-12 curriculum
+- Backend: FastAPI, SQLModel, ChromaDB, httpx
+- Frontend: React 18, TypeScript, Vite, Axios, Zustand
+- LLM runtime: Ollama
+- Default DB: SQLite
 
-✅ **Subscription Tiers**
-- **Free**: Class 10 only, 5 daily queries
-- **Premium**: Classes 10-12, 100 daily queries, 50+ chat history
-- **Enterprise**: Unlimited access
+## Runtime URLs
 
-✅ **Clean, Modern UI**
-- Responsive design with Tailwind CSS
-- Seamless streaming responses
-- Real-time loading states
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+- Ollama: `http://localhost:11434`
 
-## 🛠️ Tech Stack
+## Environment Variables
 
-- **Backend**: FastAPI, SQLModel, ChromaDB, Ollama
-- **Database**: SQLite (expandable to PostgreSQL)
-- **Frontend**: React 18, TypeScript, Tailwind CSS
-- **LLM**: Ollama with gpt-oss:120b-cloud
-- **Embeddings**: nomic-embed-text
-- **Authentication**: JWT + passlib
+### Frontend
 
-## 📋 Prerequisites
+Frontend backend URL is controlled by:
 
-- **Python 3.10+**
-- **Node.js 16+** (for frontend)
-- **Ollama** with models installed:
-  - `ollama pull gpt-oss:120b-cloud`
-  - `ollama pull nomic-embed-text`
-- **Ollama running** on `http://localhost:11434`
-
-## 🚀 Quick Start
-
-### 1. Backend Setup
-
-```bash
-# Navigate to backend
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r ../requirements.txt
-
-# Create .env file
-cp ../.env.example .env
-
-# Initialize database
-python -c "from database import create_db_and_tables; create_db_and_tables()"
-
-# Start backend server
-uvicorn main:app --reload --port 8000
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
-Backend runs on: `http://localhost:8000`
+The active local file is:
 
-### 2. Ingest NCERT PDFs
+- `frontend/.env`
 
-```bash
-# For single file
-python ingest.py --file "path/to/Math_Ch1.pdf" --class 10 --subject math
+Important: this frontend uses `VITE_API_URL`, not `REACT_APP_API_URL`.
 
-# For entire folder
-python ingest.py --folder "path/to/ncert_pdfs" --class 10 --subject math
+### Backend
 
-# List ingested books
-python ingest.py --list --class 10
+Common backend variables:
+
+```env
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=gpt-oss:120b-cloud
+SECRET_KEY=your-secret-key
+ADMIN_TOKEN=admin-secret
+DATABASE_URL=sqlite:///./vidya_ai.db
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-### 3. Frontend Setup
+The backend env file is:
 
-```bash
-# Navigate to frontend
+- `backend/.env`
+
+## Quick Start
+
+### Option 1: repo scripts on Windows
+
+From the repo root:
+
+```powershell
+./start_vidya_ai.ps1
+```
+
+Or run them separately:
+
+```powershell
+./run_backend.ps1
+./run_frontend.ps1
+```
+
+### Option 2: manual startup
+
+#### Backend
+
+From the repo root:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Create or update `backend/.env`, then start:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000
+```
+
+#### Frontend
+
+From the repo root:
+
+```powershell
 cd frontend
-
-# Install dependencies
 npm install
-
-# Create .env file
-echo "REACT_APP_API_URL=http://localhost:8000" > .env
-
-# Start development server
-npm start
 ```
 
-Frontend runs on: `http://localhost:3000`
+Set `frontend/.env`:
 
-## 📚 API Endpoints
+```env
+VITE_API_URL=http://localhost:8000
+```
 
-### Authentication
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login user
-- `GET /auth/me` - Get current user info
+Then start:
+
+```powershell
+npm run dev
+```
+
+## Ollama Setup
+
+VidyaAI expects Ollama to be running locally.
+
+```powershell
+ollama serve
+ollama pull gpt-oss:120b-cloud
+ollama pull nomic-embed-text
+```
+
+If Ollama embeddings are unavailable, the backend falls back to a local hash embedding function for retrieval.
+
+## API Route File
+
+Most application routes used by the frontend are defined in:
+
+- `backend/main.py`
+
+## API Endpoints Used by the Frontend
+
+### Auth
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- `PATCH /auth/profile`
 
 ### Library
-- `GET /library/classes` - Available classes for user
-- `GET /library/books/{class_grade}` - Get books by class
 
-### Tutoring
-- `POST /tutor/chat` - Chat with AI tutor (streaming)
-- `POST /tutor/quiz` - Generate quiz questions
-- `POST /tutor/summarize` - Generate chapter summary
-- `POST /tutor/explain` - Explain a concept
-- `POST /tutor/essay` - Generate an essay
+- `GET /library/books/{class_grade}`
+- `GET /library/chapter/{book_id}`
 
-### Admin
-- `POST /admin/upload-pdf` - Upload PDF (requires ADMIN_TOKEN)
+### Dashboard
 
-## 📊 Database Schema
+- `GET /dashboard/stats`
+- `GET /dashboard/progress`
 
-**Users**
-- id, email, full_name, hashed_password
-- google_id (for Google OAuth)
-- plan_type (free/premium/enterprise)
-- subscription status and expiry
+### Tutor
 
-**Books**
-- id, class_grade, subject, chapter
-- chunks_count, is_ingested status
+- `POST /tutor/chat`
+- `POST /tutor/quiz`
+- `POST /tutor/quiz/submit`
+- `POST /tutor/summarize`
+- `POST /tutor/explain`
+- `POST /tutor/sources`
 
-**User Access Logs**
-- Tracks user interactions (chat, quiz, etc.)
+## Backend Routes Present but Not Currently Used by the UI
 
-**Quiz Attempts**
-- Stores quiz scores and user answers
+- `POST /auth/google`
+- `GET /library/classes`
+- `GET /library/overview`
+- `POST /tutor/essay`
+- `POST /admin/enrich-book/{book_id}`
+- `POST /admin/upload-pdf`
+- `POST /upload-pdf`
+- `GET /health`
 
-## 🔐 Security Features
+## Where the Frontend Makes Backend Calls
 
-- ✅ Passwords hashed with bcrypt
-- ✅ JWT tokens for session management
-- ✅ CORS protection
-- ✅ Access control based on subscription tier
-- ✅ Environment variables for secrets
+### Shared base URL
 
-## 🎯 Usage Examples
+- `frontend/src/api/client.ts`
+- `frontend/src/pages/Chat.tsx`
+- `frontend/src/pages/Chapter.tsx`
 
-### Register & Login
-```bash
-curl -X POST "http://localhost:8000/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"student@example.com","full_name":"John Doe","password":"secure123"}'
+### Auth calls
+
+- `frontend/src/store/auth.ts` -> `/auth/register`, `/auth/login`, `/auth/me`, `/auth/profile`
+
+### Page-level calls
+
+- `frontend/src/pages/Dashboard.tsx` -> `/library/books/{class_grade}`, `/dashboard/stats`, `/dashboard/progress`
+- `frontend/src/pages/Library.tsx` -> `/library/books/{class_grade}`
+- `frontend/src/pages/Subject.tsx` -> `/library/books/{class_grade}`
+- `frontend/src/pages/Quiz.tsx` -> `/library/books/{class_grade}`, `/tutor/quiz`, `/tutor/quiz/submit`
+- `frontend/src/pages/Chat.tsx` -> `/library/books/{class_grade}`, `/library/chapter/{book_id}`, `/tutor/sources`, `/tutor/chat`, `/tutor/summarize`, `/tutor/explain`
+- `frontend/src/pages/Chapter.tsx` -> `/library/chapter/{book_id}`, `/tutor/sources`, `/tutor/summarize`, `/tutor/explain`, `/tutor/quiz`, `/tutor/quiz/submit`
+
+## Request Style Used in the Frontend
+
+- Axios is used for standard JSON API calls through `frontend/src/api/client.ts`
+- Raw `fetch` is used in `Chat.tsx` and `Chapter.tsx` for streaming tutor responses
+- Auth token injection is handled in `frontend/src/api/client.ts`
+
+## Changing the Backend URL
+
+If you want the frontend to call a different backend:
+
+1. Update `frontend/.env`
+2. Set `VITE_API_URL` to the new backend origin
+3. Restart the frontend dev server
+
+Example:
+
+```env
+VITE_API_URL=https://your-backend-domain.com
 ```
 
-### Chat with Tutor
-```bash
-curl -X POST "http://localhost:8000/tutor/chat" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "message":"What is photosynthesis?",
-    "class_grade":"10",
-    "subject":"science"
-  }'
-```
+## Ingestion Notes
 
-### Generate Quiz
-```bash
-curl -X POST "http://localhost:8000/tutor/quiz" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "topic":"Quadratic Equations",
-    "class_grade":"10",
-    "subject":"math",
-    "num_questions":5
-  }'
-```
+The repo also contains ingestion utilities that talk to the backend directly:
 
-## 📈 Scaling & Deployment
+- `backend/ingest.py`
+- `backend/ingest_all.py`
 
-### MongoDB for Chats (Future)
-Replace SQLite with MongoDB for distributed access logs.
+`backend/ingest.py` currently contains its own backend URL constant, so changing only `frontend/.env` does not affect ingestion scripts.
 
-### PostgreSQL for Production
-```bash
-# Update DATABASE_URL
-DATABASE_URL=postgresql://user:password@localhost/vidya_ai
-```
+## Useful Files
 
-### Docker Deployment
-See `Dockerfile` (to be created) for containerized deployment.
+- `frontend/.env`
+- `frontend/src/api/client.ts`
+- `frontend/src/pages/Chat.tsx`
+- `frontend/src/pages/Chapter.tsx`
+- `frontend/src/store/auth.ts`
+- `backend/main.py`
+- `backend/.env`
+- `run_backend.ps1`
+- `run_frontend.ps1`
+- `start_vidya_ai.ps1`
 
-### Kubernetes
-Helm charts available for K8s deployment.
+## Notes
 
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Submit a pull request
-
-## 📝 License
-
-MIT License - see LICENSE file
-
-## 💬 Support
-
-For issues or questions:
-- GitHub Issues: [create new issue]
-- Email: support@vidyaai.com
-
----
-
-**Made with ❤️ for Indian Students**
+- The frontend is a Vite app, so `VITE_*` env vars are the ones that matter in the browser build.
+- If documentation elsewhere still mentions `REACT_APP_API_URL`, treat that as outdated for the current frontend.
