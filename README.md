@@ -135,107 +135,118 @@ Most application routes used by the frontend are defined in:
 
 ## API Endpoints Used by the Frontend
 
-### Auth
-
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
-- `PATCH /auth/profile`
+### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login user
+- `GET /auth/me` - Get current user info
 
 ### Library
+- `GET /library/classes` - Available classes for user
+- `GET /library/books/{class_grade}` - Get books by class
 
-- `GET /library/books/{class_grade}`
-- `GET /library/chapter/{book_id}`
+### Tutoring
+- `POST /tutor/chat` - Chat with AI tutor (streaming)
+- `POST /tutor/quiz` - Generate quiz questions
+- `POST /tutor/summarize` - Generate chapter summary
+- `POST /tutor/explain` - Explain a concept
+- `POST /tutor/essay` - Generate an essay
 
-### Dashboard
+### Admin
+- `POST /admin/upload-pdf` - Upload PDF (requires ADMIN_TOKEN)
 
-- `GET /dashboard/stats`
-- `GET /dashboard/progress`
+## 📊 Database Schema
 
-### Tutor
+**Users**
+- id, email, full_name, hashed_password
+- google_id (for Google OAuth)
+- plan_type (free/premium/enterprise)
+- subscription status and expiry
 
-- `POST /tutor/chat`
-- `POST /tutor/quiz`
-- `POST /tutor/quiz/submit`
-- `POST /tutor/summarize`
-- `POST /tutor/explain`
-- `POST /tutor/sources`
+**Books**
+- id, class_grade, subject, chapter
+- chunks_count, is_ingested status
 
-## Backend Routes Present but Not Currently Used by the UI
+**User Access Logs**
+- Tracks user interactions (chat, quiz, etc.)
 
-- `POST /auth/google`
-- `GET /library/classes`
-- `GET /library/overview`
-- `POST /tutor/essay`
-- `POST /admin/enrich-book/{book_id}`
-- `POST /admin/upload-pdf`
-- `POST /upload-pdf`
-- `GET /health`
+**Quiz Attempts**
+- Stores quiz scores and user answers
 
-## Where the Frontend Makes Backend Calls
+## 🔐 Security Features
 
-### Shared base URL
+- ✅ Passwords hashed with bcrypt
+- ✅ JWT tokens for session management
+- ✅ CORS protection
+- ✅ Access control based on subscription tier
+- ✅ Environment variables for secrets
 
-- `frontend/src/api/client.ts`
-- `frontend/src/pages/Chat.tsx`
-- `frontend/src/pages/Chapter.tsx`
+## 🎯 Usage Examples
 
-### Auth calls
-
-- `frontend/src/store/auth.ts` -> `/auth/register`, `/auth/login`, `/auth/me`, `/auth/profile`
-
-### Page-level calls
-
-- `frontend/src/pages/Dashboard.tsx` -> `/library/books/{class_grade}`, `/dashboard/stats`, `/dashboard/progress`
-- `frontend/src/pages/Library.tsx` -> `/library/books/{class_grade}`
-- `frontend/src/pages/Subject.tsx` -> `/library/books/{class_grade}`
-- `frontend/src/pages/Quiz.tsx` -> `/library/books/{class_grade}`, `/tutor/quiz`, `/tutor/quiz/submit`
-- `frontend/src/pages/Chat.tsx` -> `/library/books/{class_grade}`, `/library/chapter/{book_id}`, `/tutor/sources`, `/tutor/chat`, `/tutor/summarize`, `/tutor/explain`
-- `frontend/src/pages/Chapter.tsx` -> `/library/chapter/{book_id}`, `/tutor/sources`, `/tutor/summarize`, `/tutor/explain`, `/tutor/quiz`, `/tutor/quiz/submit`
-
-## Request Style Used in the Frontend
-
-- Axios is used for standard JSON API calls through `frontend/src/api/client.ts`
-- Raw `fetch` is used in `Chat.tsx` and `Chapter.tsx` for streaming tutor responses
-- Auth token injection is handled in `frontend/src/api/client.ts`
-
-## Changing the Backend URL
-
-If you want the frontend to call a different backend:
-
-1. Update `frontend/.env`
-2. Set `VITE_API_URL` to the new backend origin
-3. Restart the frontend dev server
-
-Example:
-
-```env
-VITE_API_URL=https://your-backend-domain.com
+### Register & Login
+```bash
+curl -X POST "http://localhost:8000/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@example.com","full_name":"John Doe","password":"secure123"}'
 ```
 
-## Ingestion Notes
+### Chat with Tutor
+```bash
+curl -X POST "http://localhost:8000/tutor/chat" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "message":"What is photosynthesis?",
+    "class_grade":"10",
+    "subject":"science"
+  }'
+```
 
-The repo also contains ingestion utilities that talk to the backend directly:
+### Generate Quiz
+```bash
+curl -X POST "http://localhost:8000/tutor/quiz" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "topic":"Quadratic Equations",
+    "class_grade":"10",
+    "subject":"math",
+    "num_questions":5
+  }'
+```
 
-- `backend/ingest.py`
-- `backend/ingest_all.py`
+## 📈 Scaling & Deployment
 
-`backend/ingest.py` currently contains its own backend URL constant, so changing only `frontend/.env` does not affect ingestion scripts.
+### MongoDB for Chats (Future)
+Replace SQLite with MongoDB for distributed access logs.
 
-## Useful Files
+### PostgreSQL for Production
+```bash
+# Update DATABASE_URL
+DATABASE_URL=postgresql://user:password@localhost/vidya_ai
+```
 
-- `frontend/.env`
-- `frontend/src/api/client.ts`
-- `frontend/src/pages/Chat.tsx`
-- `frontend/src/pages/Chapter.tsx`
-- `frontend/src/store/auth.ts`
-- `backend/main.py`
-- `backend/.env`
-- `run_backend.ps1`
-- `run_frontend.ps1`
-- `start_vidya_ai.ps1`
+### Docker Deployment
+See `Dockerfile` (to be created) for containerized deployment.
 
-## Notes
+### Kubernetes
+Helm charts available for K8s deployment.
 
-- The frontend is a Vite app, so `VITE_*` env vars are the ones that matter in the browser build.
-- If documentation elsewhere still mentions `REACT_APP_API_URL`, treat that as outdated for the current frontend.
+## 🤝 Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Submit a pull request
+
+## 📝 License
+
+MIT License - see LICENSE file
+
+## 💬 Support
+
+For issues or questions:
+- GitHub Issues: [create new issue]
+- Email: support@vidyaai.com
+
+---
+
+**Made with ❤️ for Indian Students**
