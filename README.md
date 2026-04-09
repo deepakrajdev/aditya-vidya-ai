@@ -203,23 +203,3 @@ See `Dockerfile` (to be created) for containerized deployment.
 
 ### Kubernetes
 Helm charts available for K8s deployment.
-
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Submit a pull request
-
-## 📝 License
-
-MIT License - see LICENSE file
-
-## 💬 Support
-
-For issues or questions:
-- GitHub Issues: [create new issue]
-- Email: support@vidyaai.com
-
----
-
-**Made with ❤️ for Indian Students**
